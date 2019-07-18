@@ -63,18 +63,18 @@ matrix:
 
 install:
   - python -m pip --disable-pip-version-check install codecov
-  - .\misc\installOpenCppCoverage.ps1
+  - ps: .\misc\installOpenCppCoverage.ps1
 
 # Win32 and x64 are CMake-compatible solution platform names.
 # This allows us to pass %PLATFORM% to CMake -A.
 platform:
-  - Win32
+#  - Win32
   - x64
 
 # build Configurations, i.e. Debug, Release, etc.
 configuration:
   - Debug
-  - Release
+#  - Release
 
 #Cmake will autodetect the compiler, but we set the arch
 before_build:
