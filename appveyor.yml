@@ -82,8 +82,8 @@ before_build:
   # Indirection because appveyor doesn't handle multiline batch scripts properly
   # https://stackoverflow.com/questions/37627248/how-to-split-a-command-over-multiple-lines-in-appveyor-yml/37647169#37647169
   # https://help.appveyor.com/discussions/questions/3888-multi-line-cmd-or-powershell-warning-ignore
-  - cmd: .\misc\appveyorBuildConfigurationScript.bat
-
+  - python scripts\generateSingleHeader.py
+  - cmake -H. -BBuild -A%PLATFORM% -DUSE_WMAIN=%wmain% -DCATCH_BUILD_EXAMPLES=%examples% -DCATCH_BUILD_EXTRA_TESTS=%examples%
 
 # build with MSBuild
 build:
@@ -93,4 +93,5 @@ build:
 
 test_script:
   - set CTEST_OUTPUT_ON_FAILURE=1
-  - cmd: .\misc\appveyorTestRunScript.bat
+  - OpenCppCoverage --quiet --export_type=cobertura:cobertura.xml -- ctest -j 2 -C %CONFIGURATION%
+  - codecov --root .. --no-color --disable gcov -f cobertura.xml -t %CODECOV_TOKEN%
