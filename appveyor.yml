@@ -61,10 +61,6 @@ matrix:
           configuration: Release
 
 
-install:
-  - python -m pip --disable-pip-version-check install codecov
-  - ps: .\misc\installOpenCppCoverage.ps1
-
 # Win32 and x64 are CMake-compatible solution platform names.
 # This allows us to pass %PLATFORM% to CMake -A.
 platform:
@@ -93,5 +89,4 @@ build:
 
 test_script:
   - set CTEST_OUTPUT_ON_FAILURE=1
-  - OpenCppCoverage --quiet --export_type=cobertura:cobertura.xml -- ctest -j 2 -C %CONFIGURATION%
-  - codecov --root .. --no-color --disable gcov -f cobertura.xml -t %CODECOV_TOKEN%
+  - ctest -j 2 -C %CONFIGURATION%
