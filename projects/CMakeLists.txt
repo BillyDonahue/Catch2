@@ -415,3 +415,9 @@ if (CATCH_USE_VALGRIND)
     add_test(NAME ValgrindListTags COMMAND valgrind --leak-check=full --error-exitcode=1 $<TARGET_FILE:SelfTest> --list-tags)
     set_tests_properties(ValgrindListTags PROPERTIES PASS_REGULAR_EXPRESSION "definitely lost: 0 bytes in 0 blocks")
 endif()
+
+
+add_test(NAME TEMPTEST COMMAND $<TARGET_FILE:SelfTest> --list-tags)
+set_tests_properties(TEMPTEST PROPERTIES
+    WILL_FAIL TRUE
+)
