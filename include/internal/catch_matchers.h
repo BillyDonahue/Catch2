@@ -10,6 +10,7 @@
 
 #include "catch_common.h"
 
+#include <memory>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -55,6 +56,13 @@ namespace Matchers {
         struct MatcherBase : MatcherUntypedBase, MatcherMethod<T> {
         };
 
+        template <std::size_t...>
+        struct Seq { using type = Seq; };
+        template <std::size_t N, std::size_t I = 0, std::size_t ... Is>
+        struct MkSeq : MkSeq<N, I + 1, Is..., I> {};
+        template <std::size_t N, std::size_t ... Is>
+        struct MkSeq<N, N, Is...> : Seq<Is...> {};
+
         template <typename... Ms>
         class MatchAllOf : public MatcherUntypedBase {
           private:
@@ -87,7 +95,8 @@ namespace Matchers {
             };
 
           public:
-            MatchAllOf( Ms const& ...ms ) : m_matchers( ms... ) {}
+            explicit MatchAllOf( Ms ...ms ) : MatchAllOf( std::tuple<Ms...>(std::move(ms)...) ) {}
+            explicit MatchAllOf( std::tuple<Ms...> ms ) : m_matchers( std::move(ms) ) {}
 
             template <typename ArgT>
             bool match( ArgT const& arg ) const {
@@ -101,6 +110,21 @@ namespace Matchers {
                 Iter<0>{ *this }.describe( description );
                 description += " )";
                 return description;
+            }
+
+            template <typename M>
+            friend MatchAllOf<Ms..., M> operator && (M a, MatchAllOf b) {
+              return MatchAllOf<M, Ms...>(std::tuple_cat(std::make_tuple(std::move(a)), std::move(b.m_matchers)));
+            }
+            template <typename M>
+            friend MatchAllOf<Ms..., M> operator && (MatchAllOf a, M b) {
+              return MatchAllOf<Ms..., M>(std::tuple_cat(std::move(a.m_matchers),
+                                                         std::make_tuple(std::move(b))));
+            }
+            template <typename M, typename... Bs>
+            friend MatchAllOf<Ms..., Bs...> operator && (MatchAllOf a, MatchAllOf<Bs...> b) {
+              return MatchAllOf<Ms..., Bs...>(std::tuple_cat(std::move(a.m_matchers),
+                                                             std::move(b.m_matchers)));
             }
 
             std::tuple<Ms...> m_matchers;
@@ -135,8 +159,24 @@ namespace Matchers {
               void describe( std::string& ) const { }
             };
 
+            template <typename M>
+            friend MatchAnyOf<M, Ms..., M> operator || (M a, MatchAnyOf b) {
+              return MatchAnyOf<M, Ms...>(std::tuple_cat(std::make_tuple(std::move(a)), std::move(b.m_matchers)));
+            }
+            template <typename M>
+            friend MatchAnyOf<Ms..., M> operator || (MatchAnyOf a, M b) {
+              return MatchAnyOf<Ms..., M>(std::tuple_cat(std::move(a.m_matchers),
+                                                         std::make_tuple(std::move(b))));
+            }
+            template <typename M, typename... Bs>
+            friend MatchAnyOf<Ms..., Bs...> operator || (MatchAnyOf a, MatchAnyOf<Bs...> b) {
+              return MatchAnyOf<Ms..., Bs...>(std::tuple_cat(std::move(a.m_matchers),
+                                                             std::move(b.m_matchers)));
+            }
+
           public:
-            MatchAnyOf( const Ms& ...ms ) : m_matchers( ms... ) {}
+            explicit MatchAnyOf( Ms ...ms ) : MatchAnyOf( std::tuple<Ms...>(std::move(ms)...) ) {}
+            explicit MatchAnyOf( std::tuple<Ms...> ms ) : m_matchers( std::move(ms) ) {}
 
             template <typename ArgT>
             bool match( ArgT const& arg ) const {
